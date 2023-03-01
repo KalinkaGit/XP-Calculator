@@ -1,7 +1,7 @@
 function AddCalendarNextEvents(calendar) {
     let count = 0;
     $("#next-activities").html('<span class="title">Next activities</span><hr/>');
-    for (let i = 0; i < calendar.length; i++) {
+    for (let i = calendar.length - 1; i > 0; i--) {
         if (calendar[i].registered == "registered") {
             count++;
             $("#next-activities").append(`
@@ -23,7 +23,7 @@ function AddCalendarNextEvents(calendar) {
 function AddCalendarPastEvents(calendar) {
     let count = 0;
     $("#past-activities").html('<span class="title">Past activities</span><hr/>');
-    for (let i = 0; i < calendar.length; i++) {
+    for (let i = calendar.length - 1; i > 0; i--) {
         if (calendar[i].registered != "registered") {
             count++;
             $("#past-activities").append(`
