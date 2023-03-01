@@ -1,0 +1,152 @@
+header {
+    background: #152238;
+    height: 135px;
+    width: 100%;
+    position: fixed;
+    z-index: 1;
+}
+
+main {
+    position: absolute;
+    margin-top: 150px;
+    padding: 10px;
+    max-height: 350px;
+    overflow-y: auto;
+    width: 94%;
+}
+
+main::-webkit-scrollbar {
+    display: none;
+}
+
+#next-activities .title, #past-activities .title {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+#next-activities hr, #past-activities hr {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#past-activities {
+    margin-top: 20px;
+}
+
+.event .event-title-text {
+    position: absolute;
+}
+
+.event .event-title-room {
+    position: absolute;
+    margin-top: 35px;
+}
+
+.event .event-title-date {
+    position: absolute;
+    margin-top: 35px;
+    margin-left: 235px;
+}
+
+.event {
+    height: 50px;
+    width: 355px;
+    background-color: #23395d;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.event-status {
+    position: absolute;
+    width: 5px;
+    height: 70px;
+    margin-top: -10px;
+    margin-left: 360px;
+    border-bottom-right-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+#past-activities .event-status {
+    position: absolute;
+    width: 5px;
+    height: 70px;
+    margin-top: -10px;
+    margin-left: 360px;
+    border-bottom-right-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.registered {
+    background-color: #3498db;
+}
+
+.absent {
+    background-color: #e74c3c;
+}
+
+.present {
+    background-color: #2ecc71;
+}
+
+#left {
+    width: 30%;
+    height: 100%;
+    float: left;
+}
+
+#right {
+    padding-top: 10px;
+}
+
+#name {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+#ihih {
+    margin-bottom: 25px;
+}
+
+#xp-bar {
+    position: absolute;
+    z-index: 3;
+    height: 15px;
+    width: 100%;
+    background: #2c3e50;
+    margin-top: 30px;
+    margin-bottom: 10px;
+}
+
+#label-xp {
+    position: absolute;
+    z-index: 2;
+    font-size: 12px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    top: 50%;
+}
+
+#xp-progress {
+    position: absolute;
+    z-index: 1;
+    height: 100%;
+    background: #23395d;
+}
+
+#credits-acquired {
+    position: absolute;
+    font-size: 12px;
+    margin-top: -5px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#profile-picture {
+    padding: 10px;
+    object-fit: cover;
+    border-radius: 50%;
+    height: 100px;
+    width: 100px;
+}

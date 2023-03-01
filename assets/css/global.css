@@ -1,0 +1,12 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #192841;
+    color: #fff;
+    height: 500px;
+    width: 400px;
+}
