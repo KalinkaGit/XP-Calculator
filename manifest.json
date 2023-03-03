@@ -16,7 +16,8 @@
     ],
 
     "host_permissions": [
-        "*://intra.epitech.eu/*"
+        "*://intra.epitech.eu/user/?format=json",
+        "*://intra.epitech.eu/module/*/B-INN-000/*/?format=json"
     ],
 
     "background": {

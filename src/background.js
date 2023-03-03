@@ -78,20 +78,23 @@ function GetUserData() {
     });
 }
 
-function GetUserCalendar() {
+function GetUserCalendar(year, campus) {
+    campus = campus.split('/')[1];
+
     return new Promise((resolve, reject) => {
-        fetch("https://intra.epitech.eu/module/2022/B-INN-000/BDX-0-1/?format=json", {
+        fetch(`https://intra.epitech.eu/module/${year}/B-INN-000/${campus}-0-1/?format=json`, {
             method: "GET",
             credentials: "include"
         }).then((response) => {
             if (!response.message) {
-                fetch("https://intra.epitech.eu/module/2022/B-INN-000/FR-0-1/?format=json", {
+                fetch(`https://intra.epitech.eu/module/${year}/B-INN-000/FR-0-1/?format=json`, {
                     method: "GET",
                     credentials: "include"
                 }).then((response2) => {
                     if (!response2.message) {
                         response.json().then((data) => {
                             response2.json().then((data2) => {
+                                console.log(data);
                                 resolve([data, data2]);
                             });
                         });
@@ -223,10 +226,11 @@ function CalculateXP(calendar, email) {
 
 async function ExecXP() {
     let userData = await GetUserData();
-    let userCalendar = await GetUserCalendar(userData);
+    tmp_save.user = FormatUser(userData);
+
+    let userCalendar = await GetUserCalendar(tmp_save.user.scolaryear, tmp_save.user.location);
 
     tmp_save.calendar = FormatCalendar(userCalendar);
-    tmp_save.user = FormatUser(userData);
     tmp_save.xp = CalculateXP(tmp_save.calendar, tmp_save.user.email);
 
     if (tmp_save.xp > tmp_save.user.max_xp)
