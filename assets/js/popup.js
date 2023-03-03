@@ -1,7 +1,7 @@
 function AddCalendarNextEvents(calendar) {
     let count = 0;
     $("#next-activities").html('<span class="title">Next activities</span><hr/>');
-    for (let i = calendar.length - 1; i > 0; i--) {
+    for (let i = 0; i < calendar.length; i++) {
         if (calendar[i].registered == "registered") {
             count++;
             $("#next-activities").append(`
@@ -23,7 +23,7 @@ function AddCalendarNextEvents(calendar) {
 function AddCalendarPastEvents(calendar) {
     let count = 0;
     $("#past-activities").html('<span class="title">Past activities</span><hr/>');
-    for (let i = calendar.length - 1; i > 0; i--) {
+    for (let i = 0; i < calendar.length; i++) {
         if (calendar[i].registered != "registered") {
             count++;
             $("#past-activities").append(`
@@ -43,31 +43,46 @@ function AddCalendarPastEvents(calendar) {
     $("#past-activities").append("<div id='ihih'></div>");
 }
 
-$(document).ready(() => {
-    function UpdatePopup(user, xp, calendar) {
-        let progress = xp / user.max_xp * 100;
-
-        $("#profile-picture").attr("src", "https://intra.epitech.eu" + user.picture);
-        $("#name").html(user.firstname + " " + user.lastname);
-        $("#GPA").html(user.gpa + "/4.0 GPA");
-        $("#label-xp").html(xp + "/" + user.max_xp + "XP");
-        $("#xp-progress").css("width", progress + "%");
-        $("#email").html(user.email);
-        $("#credits").html(user.credits + "/" + user.max_credits + " Credits");
-        $("#credits-acquired").html(Math.trunc(xp / 10) + " Credits acquired");
+function UpdateUser(user) {
+    $("#profile-picture").attr("src", "https://intra.epitech.eu" + user.picture);
+    $("#name").html(user.firstname + " " + user.lastname);
+    $("#GPA").html(user.gpa + "/4.0 GPA");
+    $("#label-xp").html("-/" + user.max_xp + "XP");
+    $("#xp-progress").css("width", "0%");
+    $("#email").html(user.email);
+    $("#credits").html(user.credits + "/" + user.max_credits + " Credits");
+    $("#credits-acquired").html("- Credits acquired");
+    if ($("preloader"))
         $("preloader").remove();
-        AddCalendarNextEvents(calendar);
-        AddCalendarPastEvents(calendar);
-    }
+}
 
-    chrome.runtime.sendMessage({action: "update"}, (response) => {
-        UpdatePopup(response.user, response.xp, response.calendar);
-    });
+function UpdateXP(xp, max_xp) {
+    let progress = xp / max_xp * 100;
+
+    $("#xp-progress").css("width", progress + "%");
+    $("#label-xp").html(xp + "/" + max_xp + "XP");
+    $("#credits-acquired").html(Math.trunc(xp / 10) + " Credits acquired");
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action == "user") {
+        UpdateUser(request.user);
+    } else if (request.action == "calendar") {
+        AddCalendarNextEvents(request.calendar);
+        AddCalendarPastEvents(request.calendar);
+        UpdateXP(request.xp, request.max_xp);
+    }
+});
+
+$(document).ready(() => {
+    chrome.runtime.sendMessage({action: "get-user"});
+
+    chrome.runtime.sendMessage({action: "get-calendar"});
 
     setInterval(() => {
-        chrome.runtime.sendMessage({action: "update"}, (response) => {
-            UpdatePopup(response.user, response.xp, response.calendar);
-        });
+        chrome.runtime.sendMessage({action: "get-user"});
+    
+        chrome.runtime.sendMessage({action: "get-calendar"});
     }, 60000);
 
     setTimeout(() => {

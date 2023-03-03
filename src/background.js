@@ -16,18 +16,48 @@ let tmp_save = {
     calendar: null
 }
 
+const Limits = {
+    organization: {
+        "Talk": 6,
+        "Workshop": 3,
+        "Hackathon": Infinity
+    },
+    participation: {
+        "Talk": 15,
+        "Workshop": 10,
+        "Hackathon": Infinity,
+        "Experience": 8
+    }
+}
+
 const XP = {
     positive: {
-        "Talk": 1,
-        "Workshop": 2,
-        "Experience": 3,
-        "Hackathon": 6
+        participation: {
+            "Talk": 1,
+            "Workshop": 2,
+            "Hackathon": 6,
+            "Experience": 3
+        },
+        organization: {
+            "Talk": 4,
+            "Workshop": 7,
+            "Hackathon": 15,
+            "Experience": 0
+        }
     },
     negative: {
-        "Talk": -1,
-        "Workshop": -2,
-        "Experience": -3,
-        "Hackathon": -6
+        participation: {
+            "Talk": -1,
+            "Workshop": -2,
+            "Hackathon": -6,
+            "Experience": -3
+        },
+        organization: {
+            "Talk": -6,
+            "Workshop": -10,
+            "Hackathon": -20,
+            "Experience": 0
+        }
     }
 };
 
@@ -50,16 +80,25 @@ function GetUserData() {
 
 function GetUserCalendar() {
     return new Promise((resolve, reject) => {
-        fetch("https://intra.epitech.eu/planning/load?format=json&start=2022-11-30", {
+        fetch("https://intra.epitech.eu/module/2022/B-INN-000/BDX-0-1/?format=json", {
             method: "GET",
             credentials: "include"
         }).then((response) => {
             if (!response.message) {
-                response.json().then((data) => {
-                    resolve(data);
+                fetch("https://intra.epitech.eu/module/2022/B-INN-000/FR-0-1/?format=json", {
+                    method: "GET",
+                    credentials: "include"
+                }).then((response2) => {
+                    if (!response2.message) {
+                        response.json().then((data) => {
+                            response2.json().then((data2) => {
+                                resolve([data, data2]);
+                            });
+                        });
+                    } else {
+                        reject(false);
+                    }
                 });
-            } else {
-                reject(false);
             }
         });
     });
@@ -85,42 +124,97 @@ function FormatUser(data) {
     return (user);
 }
 
-function FormatCalendar(data)
-{
+function FormatCalendar(data) {
     let calendar = [];
+
     for (let i = 0; i < data.length; i++) {
-        if (data[i].codemodule != "B-INN-000")
-            continue;
+        let activities = data[i].activites;
 
-        if (!data[i].event_registered)
-            continue;
+        for (let j = 0; j < activities.length; j++) {
+            if (activities[j].events.length == 0)
+                continue;
 
-        let event = {
-            region: data[i].instance_location,
-            registered: data[i].event_registered,
-            type: data[i].type_title,
-            start: data[i].start,
-            end: data[i].end,
-            title: data[i].acti_title,
-            room: data[i].room.code
+            let activity = activities[j].events[0];
+
+            if (!activity.already_register)
+                continue;
+
+            let event = {
+                registered: activity.user_status ? activity.user_status : "registered",
+                type: activities[j].type_title,
+                start: activities[j].start,
+                end: activities[j].end,
+                title: activities[j].title,
+                room: activity.location,
+                assistants: activity.assistants
+            }
+
+            calendar.push(event);
         }
-
-        calendar.push(event);
     }
+
+    calendar.sort((a, b) => {
+        let dateA = new Date(a.start);
+        let dateB = new Date(b.start);
+        
+        return (dateA - dateB);
+    });
+
+    calendar = calendar.reverse();
 
     return (calendar);
 }
 
-function CalculateXP(calendar) {
+function CalculateXP(calendar, email) {
     let xp = 0;
 
+    let organization = {
+        "Talk": 0,
+        "Workshop": 0,
+        "Hackathon": 0
+    };
+
+    let participation = {
+        "Talk": 0,
+        "Workshop": 0,
+        "Hackathon": 0,
+        "Experience": 0
+    };
+
     for (let i = 0; i < calendar.length; i++) {
+        let isOrganizer = false;
+
+        for (let j = 0; j < calendar[i].assistants.length; j++) {
+            if (calendar[i].assistants[j].login == email) {
+                isOrganizer = true;
+                break;
+            }
+        }
+
         if (calendar[i].registered != "absent") {
-            if (calendar[i].type in XP.positive)
-                xp += XP.positive[calendar[i].type];
+            if (isOrganizer) {
+                if (organization[calendar[i].type] < Limits.organization[calendar[i].type]) {
+                    xp += XP.positive.organization[calendar[i].type];
+                    organization[calendar[i].type]++;
+                }
+            } else {
+                if (participation[calendar[i].type] < Limits.participation[calendar[i].type]) {
+                    xp += XP.positive.participation[calendar[i].type];
+                    participation[calendar[i].type]++;
+                }
+            }
         } else {
-            if (calendar[i].type in XP.negative)
-                xp += XP.negative[calendar[i].type];
+            if (isOrganizer) {
+                if (organization[calendar[i].type] < Limits.organization[calendar[i].type]) {
+                    xp += XP.negative.organization[calendar[i].type];
+                    organization[calendar[i].type]++;
+                }
+            } else {
+                if (participation[calendar[i].type] < Limits.participation[calendar[i].type]) {
+                    xp += XP.negative.participation[calendar[i].type];
+                    participation[calendar[i].type]++;
+                }
+            }
         }
     }
 
@@ -133,50 +227,65 @@ async function ExecXP() {
 
     tmp_save.calendar = FormatCalendar(userCalendar);
     tmp_save.user = FormatUser(userData);
-    tmp_save.xp = CalculateXP(tmp_save.calendar);
+    tmp_save.xp = CalculateXP(tmp_save.calendar, tmp_save.user.email);
 
     if (tmp_save.xp > tmp_save.user.max_xp)
         tmp_save.xp = tmp_save.user.max_xp;
 
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
         user: tmp_save.user,
         xp: tmp_save.xp,
         calendar: tmp_save.calendar
     });
 }
 
-function CheckTmp() {
-    if (tmp_save.user != null
-        && tmp_save.xp != null
-        && tmp_save.calendar != null) {
-        return (true);
-    } else {
-        return (false);
-    }
-}
-
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.action == "update") {
-        if (CheckTmp()) {
-            sendResponse({
-                user: tmp_save.user,
-                xp: tmp_save.xp,
-                calendar: tmp_save.calendar
+    if (request.action == "get-user") {
+        if (tmp_save.user != null) {
+            chrome.runtime.sendMessage({
+                action: "user",
+                user: tmp_save.user
             });
         } else {
-            chrome.storage.sync.get(["user", "xp", "calendar"], async function(result) {
+            chrome.storage.local.get(["user"], async function(result) {
                 if (result.user == null || result.xp == null || result.calendar == null) {
                     await ExecXP();
-                    sendResponse({
-                        user: tmp_save.user,
-                        xp: tmp_save.xp,
-                        calendar: tmp_save.calendar
+                    chrome.runtime.sendMessage({
+                        action: "user",
+                        user: tmp_save.user
                     });
                 } else {
-                    sendResponse({
-                        user: result.user,
+                    chrome.runtime.sendMessage({
+                        action: "user",
+                        user: result.user
+                    });
+                }
+            });
+        }
+    } else if (request.action == "get-calendar") {
+        if (tmp_save.user != null && tmp_save.calendar != null && tmp_save.xp != null) {
+            chrome.runtime.sendMessage({
+                action: "calendar",
+                calendar: tmp_save.calendar,
+                xp: tmp_save.xp,
+                max_xp: tmp_save.user.max_xp
+            });
+        } else {
+            chrome.storage.local.get(["user", "calendar", "xp"], async function(result) {
+                if (result.user == null || result.calendar == null || result.xp == null) {
+                    await ExecXP();
+                    chrome.runtime.sendMessage({
+                        action: "calendar",
+                        calendar: tmp_save.calendar,
+                        xp: tmp_save.xp,
+                        max_xp: tmp_save.user.max_xp
+                    });
+                } else {
+                    chrome.runtime.sendMessage({
+                        action: "calendar",
+                        calendar: result.calendar,
                         xp: result.xp,
-                        calendar: result.calendar
+                        max_xp: result.user.max_xp
                     });
                 }
             });
@@ -184,5 +293,5 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
-setInterval(ExecXP, 1 * 60 * 1000 * 5);
+setInterval(ExecXP, 1 * 60 * 1000 * 1);
 ExecXP();
