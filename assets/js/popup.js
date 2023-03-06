@@ -47,11 +47,8 @@ function UpdateUser(user) {
     $("#profile-picture").attr("src", "https://intra.epitech.eu" + user.picture);
     $("#name").html(user.firstname + " " + user.lastname);
     $("#GPA").html(user.gpa + "/4.0 GPA");
-    $("#label-xp").html("-/" + user.max_xp + "XP");
-    $("#xp-progress").css("width", "0%");
     $("#email").html(user.email);
     $("#credits").html(user.credits + "/" + user.max_credits + " Credits");
-    $("#credits-acquired").html("- Credits acquired");
     if ($("preloader"))
         $("preloader").remove();
 }

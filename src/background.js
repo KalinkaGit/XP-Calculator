@@ -94,7 +94,6 @@ function GetUserCalendar(year, campus) {
                     if (!response2.message) {
                         response.json().then((data) => {
                             response2.json().then((data2) => {
-                                console.log(data);
                                 resolve([data, data2]);
                             });
                         });
@@ -145,7 +144,7 @@ function FormatCalendar(data) {
             let event = {
                 registered: activity.user_status ? activity.user_status : "registered",
                 type: activities[j].type_title,
-                start: activities[j].start,
+                start: activity.begin,
                 end: activities[j].end,
                 title: activities[j].title,
                 room: activity.location,
@@ -229,8 +228,8 @@ async function ExecXP() {
     tmp_save.user = FormatUser(userData);
 
     let userCalendar = await GetUserCalendar(tmp_save.user.scolaryear, tmp_save.user.location);
-
     tmp_save.calendar = FormatCalendar(userCalendar);
+
     tmp_save.xp = CalculateXP(tmp_save.calendar, tmp_save.user.email);
 
     if (tmp_save.xp > tmp_save.user.max_xp)
@@ -297,5 +296,5 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
-setInterval(ExecXP, 1 * 60 * 1000 * 1);
+setInterval(ExecXP, 300000 / 5);
 ExecXP();
